@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id            String        @id @default(uuid())
+    name          String
+    email         String        @unique
+    password      String
+    role          UserRole      @default(DETECTIVE)
+    subscription  Subscription?
+    cases         Case[]        @relation("CaseCreator")
+    assignedCases Case[]        @relation("CaseInvestigator")
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+}
+
+model Case {
+    id             String         @id @default(uuid())
+    title          String
+    description    String
+    mainImage      String?
+    incidentDate   DateTime
+    difficulty     CaseDifficulty
+    estimatedTime  String
+    category       String
+    status         CaseStatus     @default(OPEN)
+    views          Int            @default(0)
+    completedCount Int            @default(0)
+    rating         Float?         @default(0)
+    creator        User           @relation("CaseCreator", fields: [creatorId], references: [id])
+    creatorId      String
+    investigator   User?          @relation("CaseInvestigator", fields: [investigatorId], references: [id])
+    investigatorId String?
+    evidences      Evidence[]
+    reports        Report[]
+    testimonies    Testimony[]
+    news           News[]
+    createdAt      DateTime       @default(now())
+    updatedAt      DateTime       @updatedAt
+}
+
+model Evidence {
+    id          String       @id @default(uuid())
+    case        Case         @relation(fields: [caseId], references: [id])
+    caseId      String
+    type        EvidenceType
+    title       String
+    description String?
+    url         String?
+    content     String?
+    thumbnail   String?
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+}
+
+model Report {
+    id        String     @id @default(uuid())
+    case      Case       @relation(fields: [caseId], references: [id])
+    caseId    String
+    title     String
+    date      DateTime
+    content   String
+    type      ReportType
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+}
+
+model Testimony {
+    id          String   @id @default(uuid())
+    case        Case     @relation(fields: [caseId], references: [id])
+    caseId      String
+    witnessName String
+    role        String
+    statement   String
+    date        DateTime
+    audioUrl    String?
+    videoUrl    String?
+    transcript  String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+}
+
+model News {
+    id        String   @id @default(uuid())
+    case      Case?    @relation(fields: [caseId], references: [id])
+    caseId    String?
+    title     String
+    source    String
+    date      DateTime
+    excerpt   String
+    content   String
+    pdfUrl    String?
+    imageUrl  String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Plan {
+    id                   String             @id @default(uuid())
+    name                 String
+    price                Float
+    period               SubscriptionPeriod
+    maxCasesPerMonth     Int?
+    accessPremiumReports Boolean            @default(false)
+    features             String[]
+    subscriptions        Subscription[]
+    createdAt            DateTime           @default(now())
+    updatedAt            DateTime           @updatedAt
+}
+
+model Subscription {
+    id              String        @id @default(uuid())
+    user            User          @relation(fields: [userId], references: [id])
+    userId          String        @unique
+    plan            Plan          @relation(fields: [planId], references: [id])
+    planId          String
+    paymentStatus   PaymentStatus @default(PENDING)
+    startDate       DateTime
+    endDate         DateTime
+    nextBillingDate DateTime
+    paymentHistory  Json[]
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+}
+
+enum UserRole {
+    DETECTIVE
+    ADMIN
+}
+
+enum CaseDifficulty {
+    EASY
+    MEDIUM
+    HARD
+}
+
+enum CaseStatus {
+    OPEN
+    SOLVED
+    CLOSED
+}
+
+enum EvidenceType {
+    IMAGE
+    VIDEO
+    PDF
+    TEXT
+}
+
+enum ReportType {
+    TEXT
+    PDF
+}
+
+enum SubscriptionPeriod {
+    MONTHLY
+    YEARLY
+}
+
+enum PaymentStatus {
+    PENDING
+    PAID
+    CANCELLED
+}
