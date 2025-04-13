@@ -20,7 +20,9 @@
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
+    "@types/express": "^5.0.1",
     "apicasos": "file:",
+    "express": "^5.1.0",
     "prisma": "^6.5.0"
   }
 }
